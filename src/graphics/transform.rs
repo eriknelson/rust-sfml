@@ -40,7 +40,7 @@ use ffi::graphics::transform as ffi;
 /// rotate, scale, shear, project, whatever things.
 #[repr(C)]
 #[allow(missing_docs)]
-#[deriving(Copy)]
+#[derive(Copy)]
 pub struct Transform {
     pub a00: f32,
     pub a01: f32,
@@ -79,9 +79,9 @@ impl Transform {
     }
 
     /// Return the matrix
-    pub fn get_matrix(&mut self) -> [f32, ..16] {
+    pub fn get_matrix(&mut self) -> [f32; 16] {
         unsafe {
-            let matrix: [f32, ..16] =
+            let matrix: [f32; 16] =
                 [0.,0.,0.,0.,
                  0.,0.,0.,0.,
                  0.,0.,0.,0.,

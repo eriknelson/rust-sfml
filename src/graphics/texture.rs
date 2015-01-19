@@ -28,6 +28,7 @@
 
 use libc::{c_uint, size_t};
 use std::ptr;
+use std::ffi::CString;
 
 use traits::Wrappable;
 use graphics::{RenderWindow, Image, IntRect};
@@ -97,10 +98,9 @@ impl Texture {
     /// Return Some(Texture) or None
     pub fn new_from_file(filename: &str) -> Option<Texture> {
         let mut tex = ptr::null_mut();
+        let c_str = CString::from_slice(filename.as_bytes()).as_ptr();
         unsafe {
-            filename.with_c_str(|c_str| {
-                    tex = ffi::sfTexture_createFromFile(c_str as *mut i8, ptr::null())
-                });
+            tex = ffi::sfTexture_createFromFile(c_str as *mut i8, ptr::null())
         }
         if tex.is_null() {
             None
@@ -122,10 +122,9 @@ impl Texture {
     pub fn new_from_file_with_rect(filename: &str,
                                    area: &IntRect) -> Option<Texture> {
         let mut tex = ptr::null_mut();
+        let c_str = CString::from_slice(filename.as_bytes()).as_ptr();
         unsafe {
-            filename.with_c_str(|c_str| {
-                    tex = ffi::sfTexture_createFromFile(c_str as *mut i8, &*area)
-                });
+            tex = ffi::sfTexture_createFromFile(c_str as *mut i8, &*area)
         }
         if tex.is_null() {
             None
@@ -211,7 +210,7 @@ impl Texture {
     /// * x - X offset in the texture where to copy the source pixels
     /// * y - Y offset in the texture where to copy the source pixels
     pub fn update_from_window(&mut self,
-                              window: Window,
+                              window: &Window,
                               x: uint,
                               y: uint) -> () {
         unsafe {
@@ -229,7 +228,7 @@ impl Texture {
     /// * x - X offset in the texture where to copy the source pixels
     /// * y - Y offset in the texture where to copy the source pixels
     pub fn update_from_render_window(&mut self,
-                                     render_window: RenderWindow,
+                                     render_window: &RenderWindow,
                                      x: uint,
                                      y: uint) -> () {
         unsafe {

@@ -33,6 +33,7 @@
 use libc::{c_float, c_uint};
 use std::ptr;
 use std::vec::Vec;
+use std::ffi::CString;
 
 use traits::{Drawable, Wrappable};
 use window::{ContextSettings, VideoMode, event, WindowStyle};
@@ -87,13 +88,12 @@ impl RenderWindow {
                style: WindowStyle,
                settings: &ContextSettings) -> Option<RenderWindow> {
         let mut sf_render_win: *mut ffi::sfRenderWindow = ptr::null_mut();
+        let c_str = CString::from_slice(title.as_bytes()).as_ptr();
         unsafe {
-            title.with_c_str(|c_str| {
-                    sf_render_win = ffi::sfRenderWindow_create(mode.unwrap(),
-                                                               c_str as *mut i8,
-                                                               style as u32,
-                                                               settings);
-                });
+            sf_render_win = ffi::sfRenderWindow_create(mode.unwrap(),
+                                                       c_str,
+                                                       style as u32,
+                                                       settings);
         }
         if sf_render_win.is_null() {
             None
@@ -183,7 +183,7 @@ impl RenderWindow {
     pub fn events(&self) -> Events {
         Events {
             render_window: self.render_window.clone(),
-            event: event::raw::sfEvent { data: [032, ..6u] }
+            event: event::raw::sfEvent { data: [032; 6u] }
         }
     }
 
@@ -197,7 +197,7 @@ impl RenderWindow {
     ///
     /// Return the event if an event was returned, or NoEvent if the event queue was empty
     pub fn poll_event(&mut self) -> event::Event {
-        let mut event = event::raw::sfEvent { data: [032, ..6u] };
+        let mut event = event::raw::sfEvent { data: [032; 6u] };
         let have_event: bool =  unsafe {
             match ffi::sfRenderWindow_pollEvent(self.render_window, &mut event) {
                 SFFALSE     => false,
@@ -223,7 +223,7 @@ impl RenderWindow {
     ///
     /// Return the event or NoEvent if an error has occured
     pub fn wait_event(&mut self) -> event::Event {
-        let mut event = event::raw::sfEvent { data: [032, ..6u] };
+        let mut event = event::raw::sfEvent { data: [032; 6u] };
         let have_event: bool =  unsafe {
             match ffi::sfRenderWindow_waitEvent(self.render_window, &mut event) {
                 SFFALSE     => false,
@@ -316,10 +316,9 @@ impl RenderWindow {
     /// * title - New title
     ////
     pub fn set_title(&mut self, title: &str) -> () {
+        let c_str = CString::from_slice(title.as_bytes()).as_ptr();
         unsafe {
-            title.with_c_str(|c_str| {
-                    ffi::sfRenderWindow_setTitle(self.render_window, c_str);
-                });
+            ffi::sfRenderWindow_setTitle(self.render_window, c_str);
         }
         self.title_length = title.len();
     }
@@ -1110,9 +1109,11 @@ impl RenderTarget for RenderWindow{
 
 }
 
-impl Iterator<event::Event> for Events {
+impl Iterator for Events {
+    type Item = event::Event;
+
     fn next(&mut self) -> Option<event::Event> {
-        let mut event = event::raw::sfEvent { data: [032, ..6u] };
+        let mut event = event::raw::sfEvent { data: [032; 6u] };
         match unsafe { ffi::sfRenderWindow_pollEvent(self.render_window, &mut event) } {
             SFFALSE     => None,
             SFTRUE      => Some(event::raw::get_wrapped_event(&mut event))
